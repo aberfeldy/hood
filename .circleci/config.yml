@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    machine: true
+    steps:
+      - checkout
+      - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run: docker build -t aberfeldy/hood:${CIRCLE_SHA1} .
+      - run: docker tag aberfeldy/hood:${CIRCLE_SHA1} aberfeldy/hood:latest
+      - deploy:
+          command: |
+            docker push aberfeldy/hood:${CIRCLE_SHA1}
+            docker push aberfeldy/hood:latest
