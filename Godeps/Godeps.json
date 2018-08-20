@@ -1,5 +1,5 @@
 {
-	"ImportPath": "tkd-tools.net/hood",
+	"ImportPath": "github.com/aberfeldy/hood",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v80",
 	"Deps": [
