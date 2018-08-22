@@ -61,7 +61,7 @@ func main() {
 		panic("could not find a valid namespace name")
 	}
 	if v := os.Getenv("CLUSTER_PATH"); v != "" {
-		namespace = v
+		clusterPath = v
 	} else {
 		panic("could not find a clusterpath")
 	}
