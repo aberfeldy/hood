@@ -30,6 +30,9 @@ Hood needs three Env-Variables set by Helm (or docker/bash if run in standalone)
 
 `NAMESPACE` The namespace in which Hood should create the secrets in, e.g. "apps"
 
+`CLUSTER_PATH` The path in vault in which the config and roles for the cluster are stored. If you enabled the auth at
+e.g. *vault write auth/clusters/production/role/helm* the path would be **clusters/production**
+
 
 ## Example
 
