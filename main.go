@@ -97,7 +97,7 @@ func (secrets VaultSecrets) resolve() []Secret {
 			//ToDo if props returns nil continue
 			if secretValue.Data[p] != nil {
 				se := SecretEnv{
-					name:  fmt.Sprintf("%s-%s", s.Name, p),
+					name:  fmt.Sprintf("%s", p),
 					value: fmt.Sprintf("%s", secretValue.Data[p]),
 				}
 				kubeSecret.entries = append(kubeSecret.entries, se)
@@ -184,7 +184,7 @@ func vaultClient() *api.Client {
 	if err != nil {
 		panic(err.Error())
 	}
- 	req, err := http.NewRequest("POST", fmt.Sprintf("%sv1/auth/%s/login", vaultAddress, clusterPath), bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", fmt.Sprintf("%sv1/auth/%s/login", vaultAddress, clusterPath), bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
