@@ -1,4 +1,4 @@
-path "secretk/*" {
+path "secret/*" {
   capabilities = ["read"]
 }
 path "sys/leases/renew" {
