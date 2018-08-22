@@ -37,6 +37,7 @@ type Secret struct {
 
 var (
 	vaultAddress string
+	clusterPath  string
 	vault        *api.Client
 	clientset    *kubernetes.Clientset
 	namespace    string
@@ -58,6 +59,11 @@ func main() {
 		namespace = v
 	} else {
 		panic("could not find a valid namespace name")
+	}
+	if v := os.Getenv("CLUSTER_PATH"); v != "" {
+		namespace = v
+	} else {
+		panic("could not find a clusterpath")
 	}
 
 	vault = vaultClient()
@@ -178,8 +184,7 @@ func vaultClient() *api.Client {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	req, err := http.NewRequest("POST", vaultAddress+"v1/auth/kubernetes/login", bytes.NewBuffer(data))
+ 	req, err := http.NewRequest("POST", fmt.Sprintf("%sv1/auth/%s/login", vaultAddress, clusterPath), bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
