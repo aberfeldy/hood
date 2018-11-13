@@ -11,15 +11,15 @@ var config = []byte(`
   "secrets": [
     {
       "name": "rds",
-      "path": "secret/prd/rds/luna",
+      "path": "secret/prd/rds/project",
       "props": [
         "host",
         "port"
       ]
     },
     {
-      "name": "ingram-micro",
-      "path": "secret/prd/ingram-micro",
+      "name": "stuff",
+      "path": "secret/prd/stuff",
       "props": [
         "archive-aws-s3-bucket",
         "archive-aws-s3-key",
@@ -40,15 +40,15 @@ func TestParserToReturnValidConfig(t *testing.T) {
 	should := VaultSecrets{Secrets: []VaultSecret{
 		{
 			Name: "rds",
-			Path: "secret/prd/rds/luna",
+			Path: "secret/prd/rds/project",
 			Props: []string{
 				"host",
 				"port",
 			},
 		},
 		{
-			Name: "ingram-micro",
-			Path: "secret/prd/ingram-micro",
+			Name: "stuff",
+			Path: "secret/prd/stuff",
 			Props: []string{
 				"archive-aws-s3-bucket",
 				"archive-aws-s3-key",
