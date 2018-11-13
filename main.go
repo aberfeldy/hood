@@ -88,13 +88,17 @@ func (secrets VaultSecrets) resolve() []Secret {
 	var kubeSecrets []Secret
 	for _, s := range secrets.Secrets {
 		secretValue, err := vault.Logical().Read(s.Path)
-		//ToDo if path returns nil continue
+		if secretValue == nil {
+			continue
+		}
 		if err != nil {
 			panic(err.Error())
 		}
 		kubeSecret := Secret{name: s.Name}
 		for _, p := range s.Props {
-			//ToDo if props returns nil continue
+			if s.Props == nil {
+				continue
+			}
 			if secretValue.Data[p] != nil {
 				se := SecretEnv{
 					name:  fmt.Sprintf("%s", p),
