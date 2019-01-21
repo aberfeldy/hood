@@ -78,6 +78,14 @@ func TestRenderToReturnKubeSecret(t *testing.T) {
 			{"test-db-super-secret-user", "bernd"},
 		},
 	}
+	secTrim := Secret{
+		name: "ChangeMe",
+		entries: []SecretEnv{
+			{"test-db-super-secret-host", "horstna.me "},
+			{"test-db-super-secret-port", "3306"},
+			{"test-db-super-secret-user", "bernd"},
+		},
+	}
 
 	kubeSecret := sec.Render()
 	j, err := json.Marshal(kubeSecret)
@@ -85,6 +93,12 @@ func TestRenderToReturnKubeSecret(t *testing.T) {
 		t.Errorf("could not marshall Secret: %s", sec)
 	}
 	assert.Equal(t, should, string(j))
+	kubeSecretTrim := secTrim.Render()
+	k, err := json.Marshal(kubeSecretTrim)
+	if err != nil {
+		t.Errorf("could not marshall Secret: %s", sec)
+	}
+	assert.Equal(t, should, string(k))
 
 }
 

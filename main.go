@@ -13,6 +13,7 @@ import (
 	"k8s.io/client-go/rest"
 	"net/http"
 	"os"
+	"strings"
 )
 
 //needed for json unmarshall
@@ -102,7 +103,7 @@ func (secrets VaultSecrets) resolve() []Secret {
 			if secretValue.Data[p] != nil {
 				se := SecretEnv{
 					name:  fmt.Sprintf("%s", p),
-					value: fmt.Sprintf("%s", secretValue.Data[p]),
+					value: fmt.Sprintf("%s", secretValue.Data[p].(string)),
 				}
 				kubeSecret.entries = append(kubeSecret.entries, se)
 			}
@@ -126,7 +127,7 @@ func (s *Secret) Render() v1.Secret {
 	} else {
 		data := make(map[string][]byte)
 		for _, se := range s.entries {
-			data[se.name] = []byte(se.value)
+			data[se.name] = []byte(strings.Trim(se.value, " "))
 		}
 		ks = v1.Secret{
 			Type: "opaque",
