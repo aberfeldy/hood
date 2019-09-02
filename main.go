@@ -1,17 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/hashicorp/vault/api"
-	"io/ioutil"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"net/http"
 	"os"
 	"strings"
 )
@@ -46,8 +42,32 @@ var (
 
 func main() {
 	vs := VaultSecrets{}
+	parseEnv(vs)
+
+	vault = vaultClient()
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	cs, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	} else {
+		clientset = cs
+	}
+
+	for _, v := range vs.fetch() {
+		v.Upsert()
+	}
+}
+
+func parseEnv(vs VaultSecrets) {
 	if v := os.Getenv("VAULT_SECRETS"); v != "" {
-		json.Unmarshal([]byte(v), &vs)
+		err := json.Unmarshal([]byte(v), &vs)
+		if err != nil {
+			panic("could not unmarshall config from JSON")
+		}
 	} else {
 		panic("could not parse config from Tiller")
 	}
@@ -66,52 +86,6 @@ func main() {
 	} else {
 		panic("could not find a clusterpath")
 	}
-
-	vault = vaultClient()
-
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-	cs, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err.Error())
-	} else {
-		clientset = cs
-	}
-
-	for _, v := range vs.resolve() {
-		v.Upsert()
-	}
-}
-
-func (secrets VaultSecrets) resolve() []Secret {
-	var kubeSecrets []Secret
-	for _, s := range secrets.Secrets {
-		secretValue, err := vault.Logical().Read(s.Path)
-		if secretValue == nil {
-			continue
-		}
-		if err != nil {
-			panic(err.Error())
-		}
-		kubeSecret := Secret{name: s.Name}
-		for _, p := range s.Props {
-			if s.Props == nil {
-				continue
-			}
-			if secretValue.Data[p] != nil {
-				se := SecretEnv{
-					name:  fmt.Sprintf("%s", p),
-					value: fmt.Sprintf("%s", secretValue.Data[p].(string)),
-				}
-				kubeSecret.entries = append(kubeSecret.entries, se)
-			}
-		}
-		kubeSecrets = append(kubeSecrets, kubeSecret)
-	}
-	return kubeSecrets
-
 }
 
 func (s *Secret) Render() v1.Secret {
@@ -163,55 +137,3 @@ func (s *Secret) Upsert() {
 	}
 }
 
-type Login struct {
-	JWT  string `json:"jwt"`
-	Role string `json:"role"`
-}
-
-type VaultAuth struct {
-	Auth struct {
-		ClientToken string `json:"client_token"`
-	} `json:"auth"`
-}
-
-func vaultClient() *api.Client {
-	dat, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil {
-		panic(err.Error())
-	}
-	login := Login{
-		JWT:  string(dat),
-		Role: "helm",
-	}
-	b := new(bytes.Buffer)
-	json.NewEncoder(b).Encode(login)
-	data, err := json.Marshal(login)
-	if err != nil {
-		panic(err.Error())
-	}
-	req, err := http.NewRequest("POST", fmt.Sprintf("%sv1/auth/%s/login", vaultAddress, clusterPath), bytes.NewBuffer(data))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	var auth VaultAuth
-	err = json.NewDecoder(resp.Body).Decode(&auth)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	vault, err = api.NewClient(&api.Config{
-		Address: vaultAddress,
-	})
-	if err != nil {
-		panic(err.Error())
-	}
-	vault.SetToken(auth.Auth.ClientToken)
-
-	return vault
-}
